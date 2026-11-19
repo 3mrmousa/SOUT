@@ -1,0 +1,97 @@
+@startuml
+skinparam linetype ortho
+skinparam roundcorner 6
+skinparam shadowing false
+skinparam handwritten false
+skinparam dpi 300
+
+' Styling
+skinparam class {
+    BackgroundColor #0F172A
+    BorderColor #38BDF8
+    BorderThickness 1.5
+    ArrowColor #38BDF8
+    FontColor #F8FAFC
+    FontName "Segoe UI", Arial, sans-serif
+    FontSize 12
+    AttributeFontColor #94A3B8
+    AttributeFontSize 11
+}
+
+skinparam enum {
+    BackgroundColor #1E1B4B
+    BorderColor #818CF8
+    ArrowColor #818CF8
+    FontColor #EEF2FF
+    FontName "Segoe UI", Arial, sans-serif
+    FontSize 12
+    AttributeFontColor #C7D2FE
+    AttributeFontSize 11
+}
+
+title **SOUT Database Schema (Prisma 8 / PostgreSQL)**
+
+enum "MessageStatus" as MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+entity "User" as User {
+  * id : Uuid <<PK>>
+  --
+  * email : String <<unique>>
+  * password : String
+  * username : String <<unique>>
+  * name : String
+  image : Json?
+  * isLocked : Boolean = false
+  * createdAt : TimestamptzString = now()
+  * updatedAt : TimestamptzString
+}
+
+entity "RefreshToken" as RefreshToken <<refresh_token>> {
+  * id : Uuid <<PK>>
+  --
+  * userId : Uuid <<FK>>
+  * tokenHash : String <<unique>>
+  * expiresAt : TimestamptzString
+  revokedAt : TimestamptzString?
+  revokedReason : String?
+  * createdAt : TimestamptzString = now()
+}
+
+entity "Conversation" as Conversation {
+  * id : Uuid <<PK>>
+  --
+  * createdAt : TimestamptzString = now()
+  * updatedAt : TimestamptzString
+}
+
+entity "ConversationParticipant" as ConversationParticipant {
+  * conversationId : Uuid <<PK, FK>>
+  * userId : Uuid <<PK, FK>>
+  --
+  * joinedAt : TimestamptzString = now()
+}
+
+entity "Message" as Message {
+  * id : Uuid <<PK>>
+  --
+  * content : String
+  * conversationId : Uuid <<FK>>
+  * senderId : Uuid <<FK>>
+  * status : MessageStatus = SENT
+  * createdAt : TimestamptzString = now()
+  * updatedAt : TimestamptzString
+}
+
+' Relationships derived from contract.prisma
+User ||--o{ RefreshToken : "user (onDelete: Cascade)"
+User ||--o{ ConversationParticipant : "conversationParticipants"
+Conversation ||--|{ ConversationParticipant : "participants"
+Conversation ||--o{ Message : "messages"
+User ||--o{ Message : "messages (sender)"
+Message }o--|| MessageStatus : "status"
+
+@enduml

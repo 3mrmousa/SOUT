@@ -1,0 +1,32 @@
+import { server } from "@/lib/server";
+import type {
+  Message,
+  SendMessageInput,
+  GetMessagesQuery,
+  ApiResponse,
+} from "./types";
+
+export * from "./types";
+
+export const messageServer = {
+  getMessages: (conversationId: string, query?: GetMessagesQuery) => {
+    const searchParams = new URLSearchParams();
+    if (query?.limit) searchParams.set("limit", query.limit.toString());
+    if (query?.before) searchParams.set("before", query.before);
+
+    const queryString = searchParams.toString();
+    const endpoint = `/messages/${conversationId}${queryString ? `?${queryString}` : ""}`;
+
+    return server<ApiResponse<{ messages: Message[] }>>(endpoint, {
+      method: "GET",
+    });
+  },
+
+  sendMessage: (data: SendMessageInput) =>
+    server<ApiResponse<{ message: Message }>>("/messages", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+export default messageServer;

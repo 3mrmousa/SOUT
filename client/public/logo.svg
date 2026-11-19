@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" fill="none">
+  <defs>
+    <linearGradient id="sout-bg-h" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#131620" />
+      <stop offset="100%" stop-color="#08090d" />
+    </linearGradient>
+
+    <linearGradient id="sout-border-h" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e945f5" stop-opacity="0.75" />
+      <stop offset="50%" stop-color="#3f3f46" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#9333ea" stop-opacity="0.85" />
+    </linearGradient>
+
+    <linearGradient id="raster-s-h" x1="20%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="55%" stop-color="#f0abfc" />
+      <stop offset="100%" stop-color="#e945f5" />
+    </linearGradient>
+
+    <linearGradient id="word-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="70%" stop-color="#f4f4f5" />
+      <stop offset="100%" stop-color="#e945f5" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left Emblem -->
+  <g transform="translate(6, 6) scale(0.46875)">
+    <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#sout-bg-h)" stroke="url(#sout-border-h)" stroke-width="3" />
+    <path d="M 27 40 H 18 V 88 H 27" stroke="#a855f7" stroke-width="3.5" stroke-linecap="square" opacity="0.8" />
+    <path d="M 101 40 H 110 V 88 H 101" stroke="#a855f7" stroke-width="3.5" stroke-linecap="square" opacity="0.8" />
+    <g fill="url(#raster-s-h)">
+      <rect x="46" y="29" width="36" height="10" rx="1.5" />
+      <rect x="78" y="39" width="10" height="8" rx="1" />
+      <rect x="38" y="37" width="11" height="22" rx="1.5" />
+      <rect x="46" y="57" width="36" height="12" rx="1.5" />
+      <rect x="79" y="67" width="11" height="24" rx="1.5" />
+      <rect x="40" y="81" width="10" height="8" rx="1" />
+      <rect x="46" y="89" width="36" height="10" rx="1.5" />
+    </g>
+  </g>
+
+  <!-- Raster-inspired Geometric Wordmark: SOUT -->
+  <g fill="url(#word-grad)">
+    <!-- S -->
+    <rect x="82" y="22" width="22" height="5" rx="1" />
+    <rect x="78" y="27" width="6" height="9" rx="1" />
+    <rect x="82" y="34" width="20" height="5" rx="1" />
+    <rect x="100" y="39" width="6" height="9" rx="1" />
+    <rect x="80" y="46" width="22" height="5" rx="1" />
+
+    <!-- O -->
+    <rect x="118" y="22" width="22" height="5" rx="1" />
+    <rect x="114" y="27" width="6" height="19" rx="1" />
+    <rect x="138" y="27" width="6" height="19" rx="1" />
+    <rect x="118" y="46" width="22" height="5" rx="1" />
+
+    <!-- U -->
+    <rect x="152" y="22" width="6" height="24" rx="1" />
+    <rect x="176" y="22" width="6" height="24" rx="1" />
+    <rect x="156" y="46" width="22" height="5" rx="1" />
+
+    <!-- T -->
+    <rect x="190" y="22" width="28" height="5" rx="1" />
+    <rect x="201" y="27" width="6" height="24" rx="1" />
+  </g>
+
+  <!-- Interference Accent Tag: [//] -->
+  <path d="M 234 26 H 229 V 47 H 234" stroke="#a855f7" stroke-width="2" stroke-linecap="square" />
+  <circle cx="243" cy="36.5" r="3" fill="#e945f5" />
+  <path d="M 252 26 H 257 V 47 H 252" stroke="#a855f7" stroke-width="2" stroke-linecap="square" />
+</svg>

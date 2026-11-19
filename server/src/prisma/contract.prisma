@@ -1,0 +1,69 @@
+// use prisma-8
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model User {
+  id            Uuid       @id @onCreate(uuid())
+  email         String    @unique
+  password      String
+  username      String    @unique
+  name          String
+  image         Json?
+  bio           String?
+  isLocked      Boolean   @default(false)
+  createdAt     TimestamptzString @default(now())
+  updatedAt     temporal.updatedAtString()
+
+  refreshTokens            RefreshToken[]
+  conversationParticipants ConversationParticipant[]
+  messages                 Message[]
+}
+
+model RefreshToken {
+  id Uuid @id @onCreate(uuid())
+  userId Uuid
+  tokenHash String @unique
+  expiresAt TimestamptzString
+  revokedAt TimestamptzString?
+  revokedReason String?
+  createdAt TimestamptzString @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_token")
+}
+
+model Conversation {
+  id           Uuid                      @id @onCreate(uuid())
+  participants ConversationParticipant[]
+  messages     Message[]
+  createdAt    TimestamptzString         @default(now())
+  updatedAt    temporal.updatedAtString()
+}
+
+model ConversationParticipant {
+  conversationId Uuid
+  userId         Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  joinedAt       TimestamptzString @default(now())
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id             Uuid         @id @onCreate(uuid())
+  content        String
+  conversationId Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       Uuid
+  sender         User         @relation(fields: [senderId], references: [id])
+  status         MessageStatus @default(SENT)
+  createdAt      TimestamptzString @default(now())
+  updatedAt      temporal.updatedAtString()
+}

@@ -1,7 +1,10 @@
 import type { Request, Response } from "express";
 import asyncHandler from "../../utils/errors/asyncHandler.js";
 import { userService } from "./user.service.js";
-import { generateAndSetJWT, cleanAuthCookies } from "../../utils/tokens/index.js";
+import {
+  generateAndSetJWT,
+  cleanAuthCookies,
+} from "../../utils/tokens/index.js";
 import type { AuthRequest } from "../../types/types.js";
 import type {
   SearchUserQuery,
@@ -13,7 +16,9 @@ import type {
   ChangeEmailRequestInput,
   VerifyCurrentMailInput,
   ChangeEmailInput,
+  DeleteAccountInput,
 } from "./user.schema.js";
+import { forceLogoutAllSessions } from "../../socket.js";
 
 export const searchUsers = asyncHandler(
   async (req: AuthRequest, res: Response) => {
@@ -43,10 +48,7 @@ export const getUserProfile = asyncHandler(
 export const updateProfile = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const body = req.body as UpdateProfileInput;
-    const updatedUser = await userService.updateProfile(
-      req.user.id,
-      body,
-    );
+    const updatedUser = await userService.updateProfile(req.user.id, body);
 
     res.status(200).json({
       status: "success",
@@ -80,7 +82,12 @@ export const changeUsername = asyncHandler(
       body.username,
     );
 
-    generateAndSetJWT(updatedUser.id, updatedUser.username, res);
+    generateAndSetJWT(
+      updatedUser.id,
+      updatedUser.username,
+      updatedUser.tokenVersion,
+      res,
+    );
 
     res.status(200).json({
       status: "success",
@@ -94,6 +101,7 @@ export const changePassword = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const body = req.body as ChangePasswordInput;
     await userService.changePassword(req.user.id, body);
+    forceLogoutAllSessions(req.user.id);
     cleanAuthCookies(res);
 
     res.status(200).json({
@@ -168,6 +176,19 @@ export const changeEmail = asyncHandler(
       status: "success",
       message: "Email changed successfully",
       data: { user: updatedUser },
+    });
+  },
+);
+
+export const deleteAccount = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const body = req.body as DeleteAccountInput;
+    await userService.deleteAccount(req.user.id, body.password);
+    cleanAuthCookies(res);
+
+    res.status(200).json({
+      status: "success",
+      message: "Account deleted successfully",
     });
   },
 );

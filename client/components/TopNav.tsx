@@ -13,7 +13,7 @@ interface TopNavProps {
 }
 
 export function TopNav({
-  href = "/",
+  href = "/chat",
   backLabel = "Back",
   title,
   rightElement,

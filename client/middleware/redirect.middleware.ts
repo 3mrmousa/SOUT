@@ -14,22 +14,20 @@ export function redirectMiddleware(request: NextRequest) {
   }
 
   const isPublicPage =
+    pathname === "/" ||
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/forgot-password";
 
-  // Does the user have a session? access_token or refresh_token
   const hasSession =
     request.cookies.has("access_token") || request.cookies.has("refresh_token");
 
-  // Not logged in -> go to /login
   if (!hasSession && !isPublicPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Already logged in -> go to /
-  if (hasSession && isPublicPage) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (hasSession && (pathname === "/login" || pathname === "/register")) {
+    return NextResponse.redirect(new URL("/chat", request.url));
   }
 
   return NextResponse.next();

@@ -15,18 +15,13 @@ export const validate = (schema: z.ZodObject<any>) => {
         req.body = parsedData.body as Record<string, unknown>;
       }
 
+      if (parsedData.params !== undefined) {
+        req.params = parsedData.params as Record<string, string>;
+      }
+
       if (parsedData.query !== undefined) {
         Object.defineProperty(req, "query", {
           value: parsedData.query,
-          writable: true,
-          configurable: true,
-          enumerable: true,
-        });
-      }
-
-      if (parsedData.params !== undefined) {
-        Object.defineProperty(req, "params", {
-          value: parsedData.params,
           writable: true,
           configurable: true,
           enumerable: true,

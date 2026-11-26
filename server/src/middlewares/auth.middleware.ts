@@ -23,7 +23,12 @@ export const authenticate = asyncHandler(
     }
 
     if (!JWT_SECRET) {
-      throw new Error("JWT_SECRET is not defined!");
+      throw new AppError(
+        process.env.NODE_ENV === "development"
+          ? "JWT_SECRET is not defined"
+          : "Internal server error!",
+        500,
+      );
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
@@ -35,6 +40,10 @@ export const authenticate = asyncHandler(
 
     if (!user) {
       throw new AppError("User not found", 404);
+    }
+
+    if (decoded.tokenVersion !== user.tokenVersion) {
+      throw new AppError("Session revoked. Please log in again.", 401);
     }
 
     const { password: _password, ...userWithoutPassword } = user;

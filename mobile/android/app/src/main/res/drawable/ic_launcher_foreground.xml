@@ -1,0 +1,64 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.52"
+        android:scaleY="0.52"
+        android:translateX="20.72"
+        android:translateY="20.72">
+        <!-- Floating wave accents -->
+        <path
+            android:pathData="M10,50 C38,36 90,64 118,48"
+            android:strokeColor="#E945F5"
+            android:strokeAlpha="0.45"
+            android:strokeWidth="2"
+            android:fillColor="#00000000" />
+        <path
+            android:pathData="M10,66 C42,80 86,50 118,66"
+            android:strokeColor="#C084FC"
+            android:strokeAlpha="0.6"
+            android:strokeWidth="2"
+            android:fillColor="#00000000" />
+
+        <!-- Interference Monospace Brackets [ ] -->
+        <path
+            android:pathData="M27,40 H18 V88 H27"
+            android:strokeColor="#A855F7"
+            android:strokeAlpha="0.85"
+            android:strokeWidth="3.5"
+            android:strokeLineCap="square"
+            android:fillColor="#00000000" />
+        <path
+            android:pathData="M101,40 H110 V88 H101"
+            android:strokeColor="#A855F7"
+            android:strokeAlpha="0.85"
+            android:strokeWidth="3.5"
+            android:strokeLineCap="square"
+            android:fillColor="#00000000" />
+
+        <!-- Raster-Serif 'S' Monogram -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M46,29 H82 V39 H46 Z" />
+        <path
+            android:fillColor="#F5D0FE"
+            android:pathData="M78,39 H88 V47 H78 Z" />
+        <path
+            android:fillColor="#F5D0FE"
+            android:pathData="M38,37 H49 V59 H38 Z" />
+        <path
+            android:fillColor="#F0ABFC"
+            android:pathData="M46,57 H82 V69 H46 Z" />
+        <path
+            android:fillColor="#E945F5"
+            android:pathData="M79,67 H90 V91 H79 Z" />
+        <path
+            android:fillColor="#E945F5"
+            android:pathData="M40,81 H50 V89 H40 Z" />
+        <path
+            android:fillColor="#E945F5"
+            android:pathData="M46,89 H82 V99 H46 Z" />
+    </group>
+</vector>

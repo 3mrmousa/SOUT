@@ -26,7 +26,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isPending && !user) {
-      router.push("/login");
+      router.replace("/login");
     }
   }, [isPending, user, router]);
 
@@ -58,7 +58,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-[#0b0d12] text-zinc-100 p-4 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden">
       <DynamicBackground />
       <div className="w-full max-w-4xl relative z-10 space-y-4">
-        <TopNav href="/" backLabel="Messages" title="My Profile" />
+        <TopNav href="/chat" backLabel="Messages" title="My Profile" />
 
         <div className="bg-[#101218]/90 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
           <div

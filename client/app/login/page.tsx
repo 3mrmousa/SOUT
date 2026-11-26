@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       const res = await authClient.login({ identifier, password });
       toast.success(res.message || "Logged in successfully!");
-      window.location.href = "/";
+      window.location.href = "/chat";
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to log in");
     } finally {

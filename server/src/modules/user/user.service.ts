@@ -1,9 +1,5 @@
 import { db } from "../../prisma/db.js";
 import AppError from "../../utils/errors/AppError.js";
-import {
-  uploadImageToCloudinary,
-  deleteFromCloudinary,
-} from "../../utils/cloudinary/index.js";
 import { comparePassword, hashPassword } from "../../utils/password/index.js";
 import { generateOTP, hashOTP, verifyOTP } from "../../utils/otp/index.js";
 import {
@@ -15,8 +11,13 @@ import {
   sendChangeEmailCurrentOtpMail,
   sendChangeEmailNewOtpMail,
   sendEmailChangedMail,
+  sendPasswordChangedMail,
 } from "../../utils/mail/index.js";
-import type { SafeUser, ProfileImageJson } from "../../types/types.js";
+import type {
+  SafeUser,
+  ProfileImageJson,
+  ChatMediaItem,
+} from "../../types/types.js";
 import type {
   UpdateProfileInput,
   ChangePasswordInput,
@@ -24,6 +25,11 @@ import type {
   VerifyCurrentMailInput,
   ChangeEmailInput,
 } from "./user.schema.js";
+import {
+  deleteFromR2,
+  uploadProfileImageToR2,
+} from "../../utils/r2/r2.util.js";
+import { RevocationReason } from "../auth/auth.service.js";
 
 interface ChangeEmailSession {
   currentEmail: string;
@@ -56,7 +62,7 @@ export class UserService {
   }
 
   async getUserByUsername(username: string): Promise<SafeUser> {
-    const user = await db.orm.public.User.first({ username });
+    const user = await db.orm.public.User.first({ username: username.trim() });
     if (!user) {
       throw new AppError("User not found", 404);
     }
@@ -66,7 +72,9 @@ export class UserService {
   }
 
   async checkUsernameExists(username: string): Promise<boolean> {
-    const user = await db.orm.public.User.where({ username }).first();
+    const user = await db.orm.public.User.where({
+      username: username.trim(),
+    }).first();
     return Boolean(user);
   }
 
@@ -150,17 +158,29 @@ export class UserService {
 
     const hashedPassword = await hashPassword(input.newPassword);
 
-    await db.orm.public.User.where({ id: userId }).update({
-      password: hashedPassword,
+    await db.transaction(async (tx) => {
+      const currentUser = await tx.orm.public.User.where({ id: userId })
+        .forNoKeyUpdate()
+        .first();
+      if (!currentUser) {
+        throw new AppError("User not found", 404);
+      }
+      await tx.orm.public.User.where({ id: userId }).update({
+        password: hashedPassword,
+        tokenVersion: currentUser.tokenVersion + 1,
+      });
+
+      await tx.orm.public.RefreshToken.where((rt) => rt.userId.eq(userId))
+        .where((rt) => rt.revokedAt.isNull())
+        .updateAll({
+          revokedAt: new Date().toISOString(),
+          revokedReason: RevocationReason.PASSWORD_CHANGE,
+        });
     });
 
-    // Invalidate all existing sessions upon password change
-    await db.orm.public.RefreshToken.where((rt) => rt.userId.eq(userId))
-      .where((rt) => rt.revokedAt.isNull())
-      .updateAll({
-        revokedAt: new Date().toISOString(),
-        revokedReason: "PASSWORD_CHANGE",
-      });
+    sendPasswordChangedMail(user.email, user.name).catch((err) => {
+      console.error("Failed to send password changed email:", err);
+    });
   }
 
   async updateProfileImage(
@@ -176,13 +196,17 @@ export class UserService {
       throw new AppError("User not found", 404);
     }
 
-    const uploadResult = await uploadImageToCloudinary(file.buffer);
+    const uploadResult = await uploadProfileImageToR2(
+      file.buffer,
+      file.mimetype,
+      userId,
+    );
 
     if (user.image) {
       const oldPublicId = (user.image as unknown as ProfileImageJson)
         ?.public_id;
       if (oldPublicId) {
-        await deleteFromCloudinary(oldPublicId).catch(() => {});
+        await deleteFromR2(oldPublicId).catch(() => {});
       }
     }
 
@@ -208,7 +232,7 @@ export class UserService {
     if (user.image) {
       const publicId = (user.image as unknown as ProfileImageJson)?.public_id;
       if (publicId) {
-        await deleteFromCloudinary(publicId).catch(() => {});
+        await deleteFromR2(publicId).catch(() => {});
       }
     }
 
@@ -401,6 +425,66 @@ export class UserService {
 
     const { password: _p, ...safe } = updated;
     return safe;
+  }
+
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    const user = await db.orm.public.User.first({ id: userId });
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    const isPasswordValid = await comparePassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new AppError("Incorrect password", 401);
+    }
+
+    const r2KeysToDelete: string[] = [];
+    const profilePublicId = (user.image as unknown as ProfileImageJson)
+      ?.public_id;
+    if (profilePublicId) {
+      r2KeysToDelete.push(profilePublicId);
+    }
+
+    const participations = await db.orm.public.ConversationParticipant.where({
+      userId,
+    }).all();
+    const convIds = participations.map((p) => p.conversationId);
+
+    for (const convId of convIds) {
+      const msgs = await db.orm.public.Message.where({
+        conversationId: convId,
+      }).all();
+
+      for (const msg of msgs) {
+        const mediaList = msg.media as unknown as ChatMediaItem[] | null;
+
+        if (Array.isArray(mediaList)) {
+          for (const item of mediaList) {
+            if (item?.key) r2KeysToDelete.push(item.key);
+          }
+        }
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      for (const convId of convIds) {
+        await tx.orm.public.Message.where({
+          conversationId: convId,
+        }).deleteAll();
+        await tx.orm.public.ConversationParticipant.where({
+          conversationId: convId,
+        }).deleteAll();
+        await tx.orm.public.Conversation.where({ id: convId }).deleteAll();
+      }
+
+      await tx.orm.public.Message.where({ senderId: userId }).deleteAll();
+      await tx.orm.public.RefreshToken.where({ userId }).deleteAll();
+      await tx.orm.public.User.where({ id: userId }).deleteAll();
+    });
+
+    if (r2KeysToDelete.length > 0) {
+      await Promise.allSettled(r2KeysToDelete.map((key) => deleteFromR2(key)));
+    }
   }
 }
 

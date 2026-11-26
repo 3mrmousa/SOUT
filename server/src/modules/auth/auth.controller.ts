@@ -17,6 +17,7 @@ import type {
   ResetPasswordInput,
 } from "./auth.schema.js";
 import AppError from "../../utils/errors/AppError.js";
+import { forceLogoutAllSessions } from "../../socket.js";
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const body = req.body as RegisterInput;
@@ -35,7 +36,7 @@ export const verifyRegister = asyncHandler(
     const body = req.body as VerifyRegisterInput;
 
     const user = await authService.verifyRegister(body);
-    generateAndSetJWT(user.id, user.username, res);
+    generateAndSetJWT(user.id, user.username, user.tokenVersion, res);
     const { token, hashedToken, expiresAt } = generateRefreshToken();
     setRefreshToken(res, token);
     await authService.createRefreshToken(user.id, hashedToken, expiresAt);
@@ -52,7 +53,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const body = req.body as LoginInput;
 
   const user = await authService.login(body);
-  generateAndSetJWT(user.id, user.username, res);
+  generateAndSetJWT(user.id, user.username, user.tokenVersion, res);
   const { token, hashedToken, expiresAt } = generateRefreshToken();
   setRefreshToken(res, token);
   await authService.createRefreshToken(user.id, hashedToken, expiresAt);
@@ -110,7 +111,12 @@ export const refreshAccessToken = asyncHandler(
     try {
       const { safeUser, refreshToken } =
         await authService.refreshToken(rawToken);
-      generateAndSetJWT(safeUser.id, safeUser.username, res);
+      generateAndSetJWT(
+        safeUser.id,
+        safeUser.username,
+        safeUser.tokenVersion,
+        res,
+      );
       setRefreshToken(res, refreshToken);
 
       res.status(200).json({
@@ -147,6 +153,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 export const logoutAll = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     await authService.logoutAll(req.user.id);
+    forceLogoutAllSessions(req.user.id);
     cleanAuthCookies(res);
 
     res.status(200).json({

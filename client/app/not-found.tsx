@@ -35,7 +35,7 @@ export default function NotFound() {
         </div>
 
         <Link
-          href="/"
+          href="/chat"
           className="inline-flex items-center justify-center gap-2 w-full h-11 px-5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-colors shadow-lg shadow-purple-600/20"
         >
           <ArrowLeft className="w-4 h-4" />

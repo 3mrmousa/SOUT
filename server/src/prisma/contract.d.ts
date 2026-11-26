@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'acdf13c76f638126dbfdac454e3058255e69f07e7b999a26df63ad0d5a04da15'>;
+  StorageHashBase<'6411d5b16808d83552ebabdbab54dcb44b4697df9501fa33efe6c68cf21338b4'>;
 export type ExecutionHash =
   ExecutionHashBase<'7dbc07dfa08fe9e496d985419bf1ac37232f799afeaac2c2d7c95831f0c5ecbc'>;
 export type ProfileHash =
@@ -311,6 +311,7 @@ export namespace Models {
     conversationId: FieldOutputTypes['public']['Message']['conversationId'];
     createdAt: FieldOutputTypes['public']['Message']['createdAt'];
     id: FieldOutputTypes['public']['Message']['id'];
+    media: FieldOutputTypes['public']['Message']['media'];
     senderId: FieldOutputTypes['public']['Message']['senderId'];
     status: FieldOutputTypes['public']['Message']['status'];
     updatedAt: FieldOutputTypes['public']['Message']['updatedAt'];
@@ -338,6 +339,7 @@ export namespace Models {
     isLocked: FieldOutputTypes['public']['User']['isLocked'];
     name: FieldOutputTypes['public']['User']['name'];
     password: FieldOutputTypes['public']['User']['password'];
+    tokenVersion: FieldOutputTypes['public']['User']['tokenVersion'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     username: FieldOutputTypes['public']['User']['username'];
     conversationParticipants: public_ConversationParticipant[];
@@ -472,7 +474,7 @@ type ContractBase = Omit<
                 readonly content: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly conversationId: {
@@ -492,6 +494,12 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/uuid';
                   readonly codecId: 'pg/uuid@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly media: {
+                  readonly dataType: 'pg/json';
+                  readonly codecId: 'pg/json@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly senderId: {
@@ -686,6 +694,16 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly tokenVersion: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
+                  readonly many: false;
+                };
                 readonly updatedAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-string@1';
@@ -852,7 +870,7 @@ type ContractBase = Omit<
           readonly Message: {
             readonly fields: {
               readonly content: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly conversationId: {
@@ -869,6 +887,10 @@ type ContractBase = Omit<
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/uuid@1' };
+              };
+              readonly media: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/json@1' };
               };
               readonly senderId: {
                 readonly nullable: false;
@@ -917,6 +939,7 @@ type ContractBase = Omit<
                 readonly conversationId: { readonly column: 'conversationId' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
+                readonly media: { readonly column: 'media' };
                 readonly senderId: { readonly column: 'senderId' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
@@ -1025,6 +1048,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly tokenVersion: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly updatedAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -1084,6 +1111,7 @@ type ContractBase = Omit<
                 readonly isLocked: { readonly column: 'isLocked' };
                 readonly name: { readonly column: 'name' };
                 readonly password: { readonly column: 'password' };
+                readonly tokenVersion: { readonly column: 'tokenVersion' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly username: { readonly column: 'username' };
               };

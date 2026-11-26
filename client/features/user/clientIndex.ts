@@ -7,6 +7,7 @@ import type {
   ChangeEmailRequestInput,
   VerifyCurrentMailInput,
   ChangeEmailInput,
+  DeleteAccountInput,
   SearchUsersResponse,
   SafeUser,
   ApiResponse,
@@ -79,6 +80,12 @@ export const userClient = {
   changeEmail: (data: ChangeEmailInput) =>
     client<ApiResponse<{ user: SafeUser }>>("/users/profile/email/change", {
       method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  deleteAccount: (data: DeleteAccountInput) =>
+    client<ApiResponse<null>>("/users/profile", {
+      method: "DELETE",
       body: JSON.stringify(data),
     }),
 };

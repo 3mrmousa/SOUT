@@ -1,50 +1,63 @@
 import { z } from "zod";
 
+const emailSchema = z
+  .string()
+  .trim()
+  .email("Invalid email address")
+  .toLowerCase();
+
+const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, "Username must be at least 3 characters")
+  .regex(
+    /^[a-z0-9_]+$/,
+    "Username must be lowercase and can only contain letters, numbers, and underscores",
+  );
+
 export const registerSchema = z.object({
   body: z.object({
-    email: z.string().email("Invalid email address"),
+    email: emailSchema,
     password: z.string().min(6, "Password must be at least 6 characters"),
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .regex(
-        /^[a-zA-Z0-9_]+$/,
-        "Username can only contain letters, numbers, and underscores",
-      ),
-    name: z.string().min(1, "Name is required"),
+    username: usernameSchema,
+    name: z.string().trim().min(1, "Name is required"),
   }),
 });
 
 export const verifyRegisterSchema = z.object({
   body: z.object({
-    email: z.string().email("Invalid email address"),
-    otp: z.string().min(6, "OTP must be 6 digits"),
+    email: emailSchema,
+    otp: z.string().trim().min(6, "OTP must be 6 digits"),
   }),
 });
 
 export const loginSchema = z.object({
   body: z.object({
-    identifier: z.string().min(1, "Username or email is required"),
+    identifier: z
+      .string()
+      .trim()
+      .min(1, "Username or email is required")
+      .transform((val) => (val.includes("@") ? val.toLowerCase() : val)),
     password: z.string().min(1, "Password is required"),
   }),
 });
 
 export const forgotPasswordSchema = z.object({
   body: z.object({
-    email: z.string().email("Invalid email address"),
+    email: emailSchema,
   }),
 });
 
 export const verifyForgotPasswordSchema = z.object({
   body: z.object({
-    email: z.string().email("Invalid email address"),
-    otp: z.string().min(6, "OTP must be 6 digits"),
+    email: emailSchema,
+    otp: z.string().trim().min(6, "OTP must be 6 digits"),
   }),
 });
 
 export const resetPasswordSchema = z.object({
   body: z.object({
-    email: z.string().email("Invalid email address"),
+    email: emailSchema,
     password: z.string().min(6, "Password must be at least 6 characters"),
   }),
 });

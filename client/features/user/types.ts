@@ -35,6 +35,10 @@ export interface ChangeEmailInput {
   otp: string;
 }
 
+export interface DeleteAccountInput {
+  password: string;
+}
+
 export interface SearchUsersResponse {
   users: SafeUser[];
 }

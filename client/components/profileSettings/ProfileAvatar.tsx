@@ -35,8 +35,8 @@ export function ProfileAvatar({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size must be less than 10MB");
       return;
     }
 

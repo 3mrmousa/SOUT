@@ -1,39 +1,39 @@
 import { z } from "zod";
 
+const emailSchema = (message: string) =>
+  z.string().trim().email(message).toLowerCase();
+
+const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, "Username must be at least 3 characters")
+  .regex(
+    /^[a-z0-9_]+$/,
+    "Username must be lowercase and can only contain letters, numbers, and underscores",
+  );
+
 export const searchUserSchema = z.object({
   query: z.object({
-    q: z.string().min(1, "Search query is required"),
+    q: z.string().trim().min(1, "Search query is required"),
   }),
 });
 
 export const updateProfileSchema = z.object({
   body: z.object({
-    name: z.string().min(3, "Name must be at least 3 characters").optional(),
+    name: z.string().trim().min(3, "Name must be at least 3 characters").optional(),
     bio: z.string().max(160, "Bio must be at most 160 characters").optional(),
   }),
 });
 
 export const checkUsernameSchema = z.object({
   query: z.object({
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .regex(
-        /^[a-zA-Z0-9_]+$/,
-        "Username can only contain letters, numbers, and underscores",
-      ),
+    username: usernameSchema,
   }),
 });
 
 export const changeUsernameSchema = z.object({
   body: z.object({
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .regex(
-        /^[a-zA-Z0-9_]+$/,
-        "Username can only contain letters, numbers, and underscores",
-      ),
+    username: usernameSchema,
   }),
 });
 
@@ -54,22 +54,28 @@ export const getUserByIdSchema = z.object({
 
 export const changeEmailRequestSchema = z.object({
   body: z.object({
-    currentEmail: z.string().email("Invalid current email address"),
-    newEmail: z.string().email("Invalid new email address"),
+    currentEmail: emailSchema("Invalid current email address"),
+    newEmail: emailSchema("Invalid new email address"),
   }),
 });
 
 export const verifyCurrentMailSchema = z.object({
   body: z.object({
-    currentEmail: z.string().email("Invalid current email address"),
-    otp: z.string().min(6, "OTP must be 6 digits"),
+    currentEmail: emailSchema("Invalid current email address"),
+    otp: z.string().trim().min(6, "OTP must be 6 digits"),
   }),
 });
 
 export const changeEmailSchema = z.object({
   body: z.object({
-    currentEmail: z.string().email("Invalid current email address"),
-    otp: z.string().min(6, "OTP must be 6 digits"),
+    currentEmail: emailSchema("Invalid current email address"),
+    otp: z.string().trim().min(6, "OTP must be 6 digits"),
+  }),
+});
+
+export const deleteAccountSchema = z.object({
+  body: z.object({
+    password: z.string().min(1, "Password is required to delete your account"),
   }),
 });
 
@@ -86,3 +92,4 @@ export type VerifyCurrentMailInput = z.infer<
   typeof verifyCurrentMailSchema
 >["body"];
 export type ChangeEmailInput = z.infer<typeof changeEmailSchema>["body"];
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>["body"];

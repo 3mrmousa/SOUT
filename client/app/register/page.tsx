@@ -63,7 +63,7 @@ export default function RegisterPage() {
         otp,
       });
       toast.success(res.message || "Account created successfully!");
-      window.location.href = "/";
+      window.location.href = "/chat";
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Invalid or expired OTP",

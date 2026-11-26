@@ -23,7 +23,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!isPending && !user) {
-      router.push("/login");
+      router.replace("/login");
     }
   }, [isPending, user, router]);
 

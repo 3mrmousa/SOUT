@@ -19,14 +19,14 @@ export default function AppShell({ children }: AppShellProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { isOpen: isSidebarOpen, toggle: toggleSidebar } = useSidebarStore();
 
-  const APP_SHELL_ROUTES = new Set(["/"]);
+  const APP_SHELL_ROUTES = new Set(["/chat"]);
   const isStandalonePage = !APP_SHELL_ROUTES.has(pathname);
 
   useEffect(() => {
     if (isPending) return;
 
     if (!me && !isStandalonePage) {
-      router.push("/login");
+      router.replace("/login");
     }
   }, [isPending, me, isStandalonePage, router]);
 
@@ -62,6 +62,19 @@ export default function AppShell({ children }: AppShellProps) {
       socket.disconnect();
     };
   }, [me]);
+
+  useEffect(() => {
+    const handleForceLogout = () => {
+      socket.disconnect();
+      localStorage.removeItem("lastActiveChat");
+      window.location.assign("/login");
+    };
+
+    socket.on("force_logout", handleForceLogout);
+    return () => {
+      socket.off("force_logout", handleForceLogout);
+    };
+  }, []);
 
   if (isStandalonePage) {
     return <>{children}</>;

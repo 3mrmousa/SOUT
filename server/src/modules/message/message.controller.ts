@@ -30,8 +30,9 @@ export const getMessages = asyncHandler(
 
 export const sendMessage = asyncHandler(
   async (req: AuthRequest, res: Response) => {
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
     const body = req.body as SendMessageInput;
-    const message = await messageService.sendMessage(req.user.id, body);
+    const message = await messageService.sendMessage(req.user.id, body, files);
 
     res.status(201).json({
       status: "success",

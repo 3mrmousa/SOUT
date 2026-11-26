@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { UserPlus } from "lucide-react";
 import BranchedMenu, { BranchedMenuItem } from "@/components/BranchedMenu";
 import Avatar from "@/components/Avatar";

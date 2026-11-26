@@ -22,10 +22,10 @@ export const messageClient = {
     });
   },
 
-  sendMessage: (data: SendMessageInput) =>
+  sendMessage: (data: SendMessageInput | FormData) =>
     client<ApiResponse<{ message: Message }>>("/messages", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
     }),
 };
 

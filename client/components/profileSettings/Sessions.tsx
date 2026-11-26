@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { authClient } from "@/features/clientIndex";
 import { socket } from "@/lib/socket";
 import { useConversationStore } from "@/stores/useConversationStore";
+import { DeleteAccount } from "./DeleteAccount";
 
 export const Sessions = () => {
   const router = useRouter();
@@ -16,6 +17,7 @@ export const Sessions = () => {
 
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
   const [isLogoutAllLoading, setIsLogoutAllLoading] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const handleLogout = async () => {
     setIsLogoutLoading(true);
@@ -25,8 +27,8 @@ export const Sessions = () => {
       clearChat();
       queryClient.clear();
       toast.success("Logged out successfully");
-      router.push("/login");
-      router.refresh();
+      router.replace("/login");
+      localStorage.removeItem("lastActiveChat");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to log out");
     } finally {
@@ -42,8 +44,8 @@ export const Sessions = () => {
       clearChat();
       queryClient.clear();
       toast.success("Logged out from all devices");
-      router.push("/login");
-      router.refresh();
+      router.replace("/login");
+      localStorage.removeItem("lastActiveChat");
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -58,9 +60,7 @@ export const Sessions = () => {
   return (
     <div className="space-y-4 font-sans">
       <div className="space-y-1">
-        <h2 className="font-raster text-xl font-normal text-white">
-          Sessions
-        </h2>
+        <h2 className="font-raster text-xl font-normal text-white">Sessions</h2>
         <p className="text-xs text-zinc-400">
           Sign out of your current session or revoke access from all devices.
         </p>
@@ -94,8 +94,19 @@ export const Sessions = () => {
           )}
           <span>Log Out All Devices</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setIsDeleteOpen(true)}
+          disabled={isLogoutLoading || isLogoutAllLoading}
+          className="h-10 px-4 rounded-xl bg-red-600/15 hover:bg-red-600/25 border border-red-500/40 text-sm font-medium text-red-400 hover:text-red-200 flex items-center gap-2 transition disabled:opacity-50 cursor-pointer ml-auto"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span>Delete Account</span>
+        </button>
       </div>
+
+      {isDeleteOpen && <DeleteAccount onClose={() => setIsDeleteOpen(false)} />}
     </div>
   );
 };
-

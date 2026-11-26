@@ -14,7 +14,7 @@ export const sendMessageSchema = z.object({
   body: z.object({
     conversationId: z.string().uuid("Invalid conversation ID format"),
     recipientId: z.string().uuid("Invalid recipient ID format"),
-    content: z.string().min(1, "Message content cannot be empty"),
+    content: z.string().trim().optional(),
   }),
 });
 

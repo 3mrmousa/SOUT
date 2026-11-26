@@ -20,7 +20,10 @@ let io: Server | null = null;
 export function initSocket(httpServer: http.Server): Server {
   const ioServer = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:5001",
+      origin: [
+        process.env.CLIENT_URL ?? "http://localhost:5001",
+        process.env.MOBILE_URL ?? "http://localhost",
+      ],
       credentials: true,
     },
   });
@@ -108,45 +111,6 @@ export function initSocket(httpServer: http.Server): Server {
       if (typeof callback === "function") callback();
     });
 
-    socket.on(
-      "send_message",
-      async ({ conversationId, recipientId, content }) => {
-        try {
-          if (!content || !content.trim()) return;
-
-          const isParticipant =
-            await db.orm.public.ConversationParticipant.first({
-              conversationId,
-              userId,
-            });
-
-          if (!isParticipant) {
-            return socket.emit("error", {
-              message: "Not authorized in this conversation",
-            });
-          }
-
-          const recipientOnline = isUserOnline(recipientId);
-
-          const initialStatus = recipientOnline ? "DELIVERED" : "SENT";
-          const message = await db.orm.public.Message.create({
-            conversationId,
-            senderId: userId,
-            content,
-            status: initialStatus,
-          });
-
-          ioServer.to(`user:${userId}`).emit("message_sent", message);
-
-          if (recipientOnline) {
-            ioServer.to(`user:${recipientId}`).emit("new_message", message);
-          }
-        } catch (error) {
-          socket.emit("error", { message: "Failed to send message" });
-        }
-      },
-    );
-
     socket.on("mark_as_read", async ({ conversationId, senderId }) => {
       try {
         await db.orm.public.Message.where({ conversationId, senderId })
@@ -179,6 +143,22 @@ export function initSocket(httpServer: http.Server): Server {
       });
     });
 
+    socket.on("recording", ({ conversationId, recipientId }) => {
+      ioServer.to(`user:${recipientId}`).emit("user_recording", {
+        conversationId,
+        userId,
+        isRecording: true,
+      });
+    });
+
+    socket.on("stop_recording", ({ conversationId, recipientId }) => {
+      ioServer.to(`user:${recipientId}`).emit("user_stop_recording", {
+        conversationId,
+        userId,
+        isRecording: false,
+      });
+    });
+
     socket.on("disconnect", () => {
       const userSockets = onlineUsers.get(userId);
       if (userSockets) {
@@ -197,4 +177,15 @@ export function initSocket(httpServer: http.Server): Server {
 export function getIO(): Server {
   if (!io) throw new Error("Socket.io not initialized!");
   return io;
+}
+
+export function forceLogoutAllSessions(userId: string) {
+  if (!io) return;
+  const room = `user:${userId}`;
+
+  io.to(room).emit("force_logout");
+
+  setTimeout(() => {
+    io?.in(room).disconnectSockets(true);
+  }, 100);
 }

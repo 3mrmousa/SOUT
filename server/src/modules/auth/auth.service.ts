@@ -33,6 +33,7 @@ import type {
   ResetPasswordInput,
 } from "./auth.schema.js";
 import type { SafeUser } from "../../types/types.js";
+import { forceLogoutAllSessions } from "../../socket.js";
 
 export class AuthService {
   async requestRegister(input: RegisterInput): Promise<{ email: string }> {
@@ -133,10 +134,16 @@ export class AuthService {
 
   async login(input: LoginInput): Promise<SafeUser> {
     const { identifier, password } = input;
+    const trimmedIdentifier = identifier.trim();
+    const normalizedEmail = trimmedIdentifier.toLowerCase();
 
-    let user = await db.orm.public.User.where({ email: identifier }).first();
+    let user = await db.orm.public.User.where({
+      email: normalizedEmail,
+    }).first();
     if (!user) {
-      user = await db.orm.public.User.where({ username: identifier }).first();
+      user = await db.orm.public.User.where({
+        username: trimmedIdentifier,
+      }).first();
     }
 
     if (!user) {
@@ -230,17 +237,17 @@ export class AuthService {
   }
 
   async resetPassword(input: ResetPasswordInput): Promise<void> {
-    const { email, password } = input;
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = input.email.toLowerCase().trim();
+    const otpKey = `forgot-password:${normalizedEmail}`;
 
     const session = await getOtpSession<{
       email: string;
       hashedOtp: string;
       step1: boolean;
       step2: boolean;
-    }>(`forgot-password:${normalizedEmail}`);
+    }>(otpKey);
 
-    if (!session || !session.step1 || !session.step2) {
+    if (!session?.step1 || !session.step2) {
       throw new AppError(
         "Unauthorized password reset. Please request and verify your OTP first.",
         400,
@@ -254,29 +261,41 @@ export class AuthService {
       throw new AppError("User not found", 404);
     }
 
-    const isSamePassword = await comparePassword(password, user.password);
-    if (isSamePassword) {
+    if (await comparePassword(input.password, user.password)) {
       throw new AppError(
         "New password must be different from current password",
         400,
       );
     }
 
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(input.password);
 
-    await db.orm.public.User.where({ id: user.id }).update({
-      password: hashedPassword,
+    await db.transaction(async (tx) => {
+      const currentUser = await tx.orm.public.User.where({ id: user.id })
+        .forNoKeyUpdate()
+        .first();
+      if (!currentUser) {
+        throw new AppError("User not found", 404);
+      }
+
+      await tx.orm.public.User.where({ id: currentUser.id }).update({
+        password: hashedPassword,
+        tokenVersion: currentUser.tokenVersion + 1,
+      });
+
+      await tx.orm.public.RefreshToken.where((rt) =>
+        rt.userId.eq(currentUser.id),
+      )
+        .where((rt) => rt.revokedAt.isNull())
+        .updateAll({
+          revokedAt: new Date().toISOString(),
+          revokedReason: RevocationReason.PASSWORD_CHANGE,
+        });
     });
 
-    await deleteOtpSession(`forgot-password:${normalizedEmail}`);
+    forceLogoutAllSessions(user.id);
 
-    // Invalidate existing sessions for security by revoke it
-    await db.orm.public.RefreshToken.where((rt) =>
-      rt.userId.eq(user.id),
-    ).updateAll({
-      revokedAt: new Date().toISOString(),
-      revokedReason: RevocationReason.PASSWORD_CHANGE,
-    });
+    await deleteOtpSession(otpKey);
 
     sendPasswordChangedMail(user.email, user.name).catch((err) => {
       console.error("Failed to send password changed email:", err);
@@ -287,9 +306,9 @@ export class AuthService {
     userId: string,
     tokenHash: string,
     expiresAt: string,
-    tx?: any
+    tx?: any,
   ): Promise<void> {
-    const client = tx ?? db
+    const client = tx ?? db;
     await client.orm.public.RefreshToken.create({
       userId,
       tokenHash,
@@ -348,14 +367,13 @@ export class AuthService {
       // Check if token is already revoked
       if (storedToken.revokedAt) {
         if (storedToken.revokedReason === RevocationReason.ROTATED) {
-          throw new AppError("Refresh token has already been rotated", 401,  RevocationReason.ROTATED);
+          throw new AppError(
+            "Refresh token has already been rotated",
+            401,
+            RevocationReason.ROTATED,
+          );
         }
         throw new AppError("Refresh token has been revoked", 401);
-      }
-
-      const user = await tx.orm.public.User.first({ id: storedToken.userId });
-      if (!user || user.isLocked) {
-        throw new AppError("User not found or account locked", 401);
       }
 
       // Atomic conditional update: only update if revokedAt is still null
@@ -382,9 +400,9 @@ export class AuthService {
         hashedToken,
         expiresAt,
       } = generateRefreshToken();
-      await this.createRefreshToken(user.id, hashedToken, expiresAt, tx);
+      await this.createRefreshToken(currentUser.id, hashedToken, expiresAt, tx);
 
-      const { password: _p, ...safeUser } = user;
+      const { password: _p, ...safeUser } = currentUser;
       return { safeUser, refreshToken };
     });
   }
@@ -415,6 +433,9 @@ export class AuthService {
           revokedAt: new Date().toISOString(),
           revokedReason: RevocationReason.LOGOUT_ALL,
         });
+      await tx.orm.public.User.where({ id: userId }).update({
+        tokenVersion: currentUser.tokenVersion + 1,
+      });
     });
   }
 }

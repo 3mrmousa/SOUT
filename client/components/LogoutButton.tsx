@@ -23,8 +23,8 @@ export default function LogoutButton() {
       clearChat();
       queryClient.clear();
       toast.success("Logged out successfully");
-      router.push("/login");
-      router.refresh();
+      router.replace("/login");
+      localStorage.removeItem("lastActiveChat");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to log out");
     } finally {

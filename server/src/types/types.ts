@@ -10,6 +10,7 @@ export type SafeUser = Omit<User, "password">;
 export interface JWTPayload {
   userId: string;
   username: string;
+  tokenVersion: number;
 }
 
 export interface AuthRequest extends Request {
@@ -25,3 +26,14 @@ export type ProfileImageJson = {
 export interface RefreshTokenResponseData {
   user: SafeUser;
 }
+
+export type MediaCategory = "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT";
+
+export type ChatMediaItem = {
+  url: string;
+  key: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  category: MediaCategory;
+};

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 export const generateAndSetJWT = (
   userId: string,
   username: string,
+  tokenVersion: number,
   res: Response,
 ) => {
   const secret = process.env.JWT_SECRET;
@@ -12,7 +13,7 @@ export const generateAndSetJWT = (
     throw new Error("JWT Secret is not defined");
   }
 
-  const token = jwt.sign({ userId, username }, secret, {
+  const token = jwt.sign({ userId, username, tokenVersion }, secret, {
     expiresIn: "15m",
   });
 
